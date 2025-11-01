@@ -8,9 +8,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure DbContext with SQL Server
-builder.Services.AddDbContext<PhoneBookContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Configure DbContext with SQL Server or InMemory based on configuration
+var useInMemoryDatabase = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
+if (useInMemoryDatabase)
+{
+    builder.Services.AddDbContext<PhoneBookContext>(options =>
+        options.UseInMemoryDatabase("PhoneBookDb"));
+}
+else
+{
+    builder.Services.AddDbContext<PhoneBookContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
 
 var app = builder.Build();
 
