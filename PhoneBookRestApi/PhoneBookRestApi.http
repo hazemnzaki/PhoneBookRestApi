@@ -1,0 +1,47 @@
+@PhoneBookRestApi_HostAddress = http://localhost:5246
+
+### Get all phonebook entries
+GET {{PhoneBookRestApi_HostAddress}}/api/PhoneBook
+Accept: application/json
+
+###
+
+### Get phonebook entry by ID
+GET {{PhoneBookRestApi_HostAddress}}/api/PhoneBook/1
+Accept: application/json
+
+###
+
+### Get phonebook entry by name
+GET {{PhoneBookRestApi_HostAddress}}/api/PhoneBook/ByName/John%20Doe
+Accept: application/json
+
+###
+
+### Create a new phonebook entry
+POST {{PhoneBookRestApi_HostAddress}}/api/PhoneBook
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "phoneNumber": "+1-234-567-8900"
+}
+
+###
+
+### Update a phonebook entry
+PUT {{PhoneBookRestApi_HostAddress}}/api/PhoneBook/1
+Content-Type: application/json
+
+{
+  "id": 1,
+  "name": "John Doe",
+  "phoneNumber": "+1-555-123-4567"
+}
+
+###
+
+### Delete a phonebook entry
+DELETE {{PhoneBookRestApi_HostAddress}}/api/PhoneBook/1
+
+###
