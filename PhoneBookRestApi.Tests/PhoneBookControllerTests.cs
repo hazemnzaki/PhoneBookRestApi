@@ -112,6 +112,26 @@ namespace PhoneBookRestApi.Tests
         }
 
         [Fact]
+        public async Task GetPhoneBookEntryByName_IsCaseInsensitive()
+        {
+            // Arrange
+            using var context = GetInMemoryDbContext();
+            var entry = new PhoneBookEntry { Name = "John Doe", PhoneNumber = "123-456-7890" };
+            context.PhoneBookEntries.Add(entry);
+            await context.SaveChangesAsync();
+
+            var controller = new PhoneBookController(context);
+
+            // Act
+            var result = await controller.GetPhoneBookEntryByName("john doe");
+
+            // Assert
+            var actionResult = Assert.IsType<ActionResult<PhoneBookEntry>>(result);
+            var returnedEntry = Assert.IsType<PhoneBookEntry>(actionResult.Value);
+            Assert.Equal("John Doe", returnedEntry.Name);
+        }
+
+        [Fact]
         public async Task GetPhoneBookEntryByName_ReturnsNotFound_WhenNameDoesNotExist()
         {
             // Arrange

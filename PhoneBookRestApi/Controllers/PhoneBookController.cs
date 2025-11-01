@@ -42,7 +42,7 @@ namespace PhoneBookRestApi.Controllers
         public async Task<ActionResult<PhoneBookEntry>> GetPhoneBookEntryByName(string name)
         {
             var phoneBookEntry = await _context.PhoneBookEntries
-                .FirstOrDefaultAsync(p => p.Name == name);
+                .FirstOrDefaultAsync(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 
             if (phoneBookEntry == null)
             {
@@ -56,6 +56,11 @@ namespace PhoneBookRestApi.Controllers
         [HttpPost]
         public async Task<ActionResult<PhoneBookEntry>> PostPhoneBookEntry(PhoneBookEntry phoneBookEntry)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             _context.PhoneBookEntries.Add(phoneBookEntry);
             await _context.SaveChangesAsync();
 
@@ -69,6 +74,11 @@ namespace PhoneBookRestApi.Controllers
             if (id != phoneBookEntry.Id)
             {
                 return BadRequest();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
             }
 
             _context.Entry(phoneBookEntry).State = EntityState.Modified;
