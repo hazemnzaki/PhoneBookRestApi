@@ -40,5 +40,15 @@ namespace PhoneBookRestApi.Data
 
             return new PhoneBookContext(optionsBuilder.Options);
         }
+
+        /// <summary>
+        /// Creates a PhoneBookContext with custom options. Useful for testing.
+        /// </summary>
+        /// <param name="options">The DbContextOptions to use</param>
+        /// <returns>A new PhoneBookContext instance</returns>
+        public PhoneBookContext CreateDbContext(DbContextOptions<PhoneBookContext> options)
+        {
+            return new PhoneBookContext(options);
+        }
     }
 }
