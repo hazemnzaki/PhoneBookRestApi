@@ -30,9 +30,13 @@ A .NET 8 REST API for managing a phonebook with CRUD operations, built with Enti
 PhoneBookRestApi/
 ├── PhoneBookRestApi/              # Main API project
 │   ├── Controllers/               # API controllers
+│   └── Program.cs                 # Application startup and configuration
+├── PhoneBookRestApi.Data/         # Data layer project
 │   ├── Data/                      # DbContext and database configuration
+│   │   ├── PhoneBookContext.cs
+│   │   └── PhoneBookContextFactory.cs # Design-time DbContext factory for migrations
 │   ├── Models/                    # Data models
-│   └── Program.cs                 # Application startup
+│   └── Migrations/                # EF Core migrations (generated)
 └── PhoneBookRestApi.Tests/        # Unit test project
     └── PhoneBookControllerTests.cs # Controller tests
 ```
@@ -105,6 +109,36 @@ dotnet test
 ```
 
 All tests use an in-memory database and don't require SQL Server.
+
+### Database Migrations
+
+To create and apply database migrations when using SQL Server:
+
+1. **Create a new migration** (from the PhoneBookRestApi project directory):
+```bash
+cd PhoneBookRestApi
+dotnet ef migrations add MigrationName --project ../PhoneBookRestApi.Data/PhoneBookRestApi.Data.csproj
+```
+
+Alternatively, from the PhoneBookRestApi.Data project directory:
+```bash
+cd PhoneBookRestApi.Data
+dotnet ef migrations add MigrationName
+```
+
+2. **Apply migrations to the database**:
+```bash
+cd PhoneBookRestApi
+dotnet ef database update --project ../PhoneBookRestApi.Data/PhoneBookRestApi.Data.csproj
+```
+
+3. **Remove the last migration** (if not applied to database):
+```bash
+cd PhoneBookRestApi
+dotnet ef migrations remove --project ../PhoneBookRestApi.Data/PhoneBookRestApi.Data.csproj
+```
+
+**Note**: Make sure `UseInMemoryDatabase` is set to `false` in your configuration when working with migrations.
 
 ## Example Usage
 
