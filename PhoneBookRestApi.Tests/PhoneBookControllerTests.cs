@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PhoneBookRestApi.Controllers;
 using PhoneBookRestApi.Data;
-using PhoneBookRestApi.Models;
+using PhoneBookRestApi.Data.Models;
 
 namespace PhoneBookRestApi.Tests
 {

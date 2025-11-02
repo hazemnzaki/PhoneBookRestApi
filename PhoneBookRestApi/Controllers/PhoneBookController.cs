@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PhoneBookRestApi.Data;
-using PhoneBookRestApi.Models;
+using PhoneBookRestApi.Data.Models;
 
 namespace PhoneBookRestApi.Controllers
 {
