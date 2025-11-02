@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace PhoneBookRestApi.Models
+namespace PhoneBookRestApi.Data.Models
 {
     public class PhoneBookEntry
     {
