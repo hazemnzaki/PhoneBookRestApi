@@ -8,13 +8,15 @@ namespace PhoneBookRestApi.Tests
 {
     public class PhoneBookControllerTests
     {
+        private static readonly PhoneBookContextFactory _contextFactory = new PhoneBookContextFactory();
+
         private PhoneBookContext GetInMemoryDbContext()
         {
             var options = new DbContextOptionsBuilder<PhoneBookContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
 
-            return new PhoneBookContext(options);
+            return _contextFactory.CreateDbContext(options);
         }
 
         [Fact]
