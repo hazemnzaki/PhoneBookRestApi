@@ -8,12 +8,7 @@ namespace PhoneBookRestApi.Tests
 {
     public class PhoneBookControllerTests
     {
-        private readonly PhoneBookContextFactory _contextFactory;
-
-        public PhoneBookControllerTests()
-        {
-            _contextFactory = new PhoneBookContextFactory();
-        }
+        private static readonly PhoneBookContextFactory _contextFactory = new PhoneBookContextFactory();
 
         private PhoneBookContext GetInMemoryDbContext()
         {
