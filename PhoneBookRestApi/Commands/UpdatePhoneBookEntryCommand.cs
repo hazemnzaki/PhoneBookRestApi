@@ -5,8 +5,8 @@ namespace PhoneBookRestApi.Commands
 {
     public class UpdatePhoneBookEntryCommand : IRequest<bool>
     {
-        public int Id { get; set; }
-        public PhoneBookEntry Entry { get; set; }
+        public int Id { get; }
+        public PhoneBookEntry Entry { get; }
 
         public UpdatePhoneBookEntryCommand(int id, PhoneBookEntry entry)
         {

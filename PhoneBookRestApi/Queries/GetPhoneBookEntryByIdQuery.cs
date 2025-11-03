@@ -5,7 +5,7 @@ namespace PhoneBookRestApi.Queries
 {
     public class GetPhoneBookEntryByIdQuery : IRequest<PhoneBookEntry?>
     {
-        public int Id { get; set; }
+        public int Id { get; }
 
         public GetPhoneBookEntryByIdQuery(int id)
         {
