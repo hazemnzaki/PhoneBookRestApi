@@ -1,6 +1,6 @@
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using PhoneBookRestApi.Commands;
+using PhoneBookRestApi.CQRS;
 using PhoneBookRestApi.Data.Models;
 using PhoneBookRestApi.Queries;
 

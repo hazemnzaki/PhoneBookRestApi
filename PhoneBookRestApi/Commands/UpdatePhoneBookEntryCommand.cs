@@ -1,4 +1,4 @@
-using MediatR;
+using PhoneBookRestApi.CQRS;
 using PhoneBookRestApi.Data.Models;
 
 namespace PhoneBookRestApi.Commands

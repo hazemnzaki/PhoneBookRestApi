@@ -1,5 +1,5 @@
-using MediatR;
 using PhoneBookRestApi.Commands;
+using PhoneBookRestApi.CQRS;
 using PhoneBookRestApi.Data;
 
 namespace PhoneBookRestApi.Handlers

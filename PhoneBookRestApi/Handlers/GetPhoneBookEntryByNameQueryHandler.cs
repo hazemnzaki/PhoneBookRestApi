@@ -1,5 +1,5 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
+using PhoneBookRestApi.CQRS;
 using PhoneBookRestApi.Data;
 using PhoneBookRestApi.Data.Models;
 using PhoneBookRestApi.Queries;

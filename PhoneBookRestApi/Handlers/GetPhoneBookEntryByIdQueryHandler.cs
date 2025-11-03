@@ -1,4 +1,4 @@
-using MediatR;
+using PhoneBookRestApi.CQRS;
 using PhoneBookRestApi.Data;
 using PhoneBookRestApi.Data.Models;
 using PhoneBookRestApi.Queries;

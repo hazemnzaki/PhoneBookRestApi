@@ -1,10 +1,13 @@
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using PhoneBookRestApi.Commands;
 using PhoneBookRestApi.Controllers;
+using PhoneBookRestApi.CQRS;
 using PhoneBookRestApi.Data;
 using PhoneBookRestApi.Data.Models;
+using PhoneBookRestApi.Handlers;
+using PhoneBookRestApi.Queries;
 
 namespace PhoneBookRestApi.Tests
 {
@@ -25,7 +28,20 @@ namespace PhoneBookRestApi.Tests
         {
             var services = new ServiceCollection();
             services.AddSingleton(context);
-            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+            
+            // Register custom CQRS infrastructure
+            services.AddScoped<IMediator, Mediator>();
+            
+            // Register command handlers
+            services.AddScoped<IRequestHandler<CreatePhoneBookEntryCommand, PhoneBookEntry>, CreatePhoneBookEntryCommandHandler>();
+            services.AddScoped<IRequestHandler<UpdatePhoneBookEntryCommand, bool>, UpdatePhoneBookEntryCommandHandler>();
+            services.AddScoped<IRequestHandler<DeletePhoneBookEntryCommand, bool>, DeletePhoneBookEntryCommandHandler>();
+            
+            // Register query handlers
+            services.AddScoped<IRequestHandler<GetAllPhoneBookEntriesQuery, IEnumerable<PhoneBookEntry>>, GetAllPhoneBookEntriesQueryHandler>();
+            services.AddScoped<IRequestHandler<GetPhoneBookEntryByIdQuery, PhoneBookEntry?>, GetPhoneBookEntryByIdQueryHandler>();
+            services.AddScoped<IRequestHandler<GetPhoneBookEntryByNameQuery, PhoneBookEntry?>, GetPhoneBookEntryByNameQueryHandler>();
+            
             var serviceProvider = services.BuildServiceProvider();
             return serviceProvider.GetRequiredService<IMediator>();
         }
