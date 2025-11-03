@@ -8,6 +8,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Register MediatR
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
 // Configure DbContext with SQL Server or InMemory based on configuration
 var useInMemoryDatabase = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
 if (useInMemoryDatabase)
@@ -37,3 +40,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Make Program class accessible for testing
+public partial class Program { }

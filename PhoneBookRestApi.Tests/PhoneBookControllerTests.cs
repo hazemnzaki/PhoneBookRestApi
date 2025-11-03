@@ -1,5 +1,7 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using PhoneBookRestApi.Controllers;
 using PhoneBookRestApi.Data;
 using PhoneBookRestApi.Data.Models;
@@ -19,19 +21,30 @@ namespace PhoneBookRestApi.Tests
             return _contextFactory.CreateDbContext(options);
         }
 
+        private IMediator GetMediator(PhoneBookContext context)
+        {
+            var services = new ServiceCollection();
+            services.AddSingleton(context);
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+            var serviceProvider = services.BuildServiceProvider();
+            return serviceProvider.GetRequiredService<IMediator>();
+        }
+
         [Fact]
         public async Task GetPhoneBookEntries_ReturnsEmptyList_WhenNoEntries()
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var controller = new PhoneBookController(context);
+            var mediator = GetMediator(context);
+            var controller = new PhoneBookController(mediator);
 
             // Act
             var result = await controller.GetPhoneBookEntries();
 
             // Assert
             var actionResult = Assert.IsType<ActionResult<IEnumerable<PhoneBookEntry>>>(result);
-            var entries = Assert.IsAssignableFrom<IEnumerable<PhoneBookEntry>>(actionResult.Value);
+            var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
+            var entries = Assert.IsAssignableFrom<IEnumerable<PhoneBookEntry>>(okResult.Value);
             Assert.Empty(entries);
         }
 
@@ -46,14 +59,16 @@ namespace PhoneBookRestApi.Tests
             );
             await context.SaveChangesAsync();
 
-            var controller = new PhoneBookController(context);
+            var mediator = GetMediator(context);
+            var controller = new PhoneBookController(mediator);
 
             // Act
             var result = await controller.GetPhoneBookEntries();
 
             // Assert
             var actionResult = Assert.IsType<ActionResult<IEnumerable<PhoneBookEntry>>>(result);
-            var entries = Assert.IsAssignableFrom<IEnumerable<PhoneBookEntry>>(actionResult.Value);
+            var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
+            var entries = Assert.IsAssignableFrom<IEnumerable<PhoneBookEntry>>(okResult.Value);
             Assert.Equal(2, entries.Count());
         }
 
@@ -66,7 +81,8 @@ namespace PhoneBookRestApi.Tests
             context.PhoneBookEntries.Add(entry);
             await context.SaveChangesAsync();
 
-            var controller = new PhoneBookController(context);
+            var mediator = GetMediator(context);
+            var controller = new PhoneBookController(mediator);
 
             // Act
             var result = await controller.GetPhoneBookEntry(entry.Id);
@@ -83,7 +99,8 @@ namespace PhoneBookRestApi.Tests
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var controller = new PhoneBookController(context);
+            var mediator = GetMediator(context);
+            var controller = new PhoneBookController(mediator);
 
             // Act
             var result = await controller.GetPhoneBookEntry(999);
@@ -101,7 +118,8 @@ namespace PhoneBookRestApi.Tests
             context.PhoneBookEntries.Add(entry);
             await context.SaveChangesAsync();
 
-            var controller = new PhoneBookController(context);
+            var mediator = GetMediator(context);
+            var controller = new PhoneBookController(mediator);
 
             // Act
             var result = await controller.GetPhoneBookEntryByName("John Doe");
@@ -122,7 +140,8 @@ namespace PhoneBookRestApi.Tests
             context.PhoneBookEntries.Add(entry);
             await context.SaveChangesAsync();
 
-            var controller = new PhoneBookController(context);
+            var mediator = GetMediator(context);
+            var controller = new PhoneBookController(mediator);
 
             // Act
             var result = await controller.GetPhoneBookEntryByName("john doe");
@@ -138,7 +157,8 @@ namespace PhoneBookRestApi.Tests
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var controller = new PhoneBookController(context);
+            var mediator = GetMediator(context);
+            var controller = new PhoneBookController(mediator);
 
             // Act
             var result = await controller.GetPhoneBookEntryByName("NonExistent");
@@ -152,7 +172,8 @@ namespace PhoneBookRestApi.Tests
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var controller = new PhoneBookController(context);
+            var mediator = GetMediator(context);
+            var controller = new PhoneBookController(mediator);
             var newEntry = new PhoneBookEntry { Name = "John Doe", PhoneNumber = "123-456-7890" };
 
             // Act
@@ -176,7 +197,8 @@ namespace PhoneBookRestApi.Tests
             context.PhoneBookEntries.Add(entry);
             await context.SaveChangesAsync();
 
-            var controller = new PhoneBookController(context);
+            var mediator = GetMediator(context);
+            var controller = new PhoneBookController(mediator);
             entry.PhoneNumber = "999-888-7777";
 
             // Act
@@ -195,7 +217,8 @@ namespace PhoneBookRestApi.Tests
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var controller = new PhoneBookController(context);
+            var mediator = GetMediator(context);
+            var controller = new PhoneBookController(mediator);
             var entry = new PhoneBookEntry { Id = 1, Name = "John Doe", PhoneNumber = "123-456-7890" };
 
             // Act
@@ -210,7 +233,8 @@ namespace PhoneBookRestApi.Tests
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var controller = new PhoneBookController(context);
+            var mediator = GetMediator(context);
+            var controller = new PhoneBookController(mediator);
             var entry = new PhoneBookEntry { Id = 999, Name = "John Doe", PhoneNumber = "123-456-7890" };
 
             // Act
@@ -229,7 +253,8 @@ namespace PhoneBookRestApi.Tests
             context.PhoneBookEntries.Add(entry);
             await context.SaveChangesAsync();
 
-            var controller = new PhoneBookController(context);
+            var mediator = GetMediator(context);
+            var controller = new PhoneBookController(mediator);
 
             // Act
             var result = await controller.DeletePhoneBookEntry(entry.Id);
@@ -246,7 +271,8 @@ namespace PhoneBookRestApi.Tests
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var controller = new PhoneBookController(context);
+            var mediator = GetMediator(context);
+            var controller = new PhoneBookController(mediator);
 
             // Act
             var result = await controller.DeletePhoneBookEntry(999);

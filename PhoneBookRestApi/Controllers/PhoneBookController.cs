@@ -1,7 +1,8 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PhoneBookRestApi.Data;
+using PhoneBookRestApi.Commands;
 using PhoneBookRestApi.Data.Models;
+using PhoneBookRestApi.Queries;
 
 namespace PhoneBookRestApi.Controllers
 {
@@ -9,25 +10,26 @@ namespace PhoneBookRestApi.Controllers
     [ApiController]
     public class PhoneBookController : ControllerBase
     {
-        private readonly PhoneBookContext _context;
+        private readonly IMediator _mediator;
 
-        public PhoneBookController(PhoneBookContext context)
+        public PhoneBookController(IMediator mediator)
         {
-            _context = context;
+            _mediator = mediator;
         }
 
         // GET: api/PhoneBook
         [HttpGet]
         public async Task<ActionResult<IEnumerable<PhoneBookEntry>>> GetPhoneBookEntries()
         {
-            return await _context.PhoneBookEntries.ToListAsync();
+            var entries = await _mediator.Send(new GetAllPhoneBookEntriesQuery());
+            return Ok(entries);
         }
 
         // GET: api/PhoneBook/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<PhoneBookEntry>> GetPhoneBookEntry(int id)
         {
-            var phoneBookEntry = await _context.PhoneBookEntries.FindAsync(id);
+            var phoneBookEntry = await _mediator.Send(new GetPhoneBookEntryByIdQuery(id));
 
             if (phoneBookEntry == null)
             {
@@ -41,8 +43,7 @@ namespace PhoneBookRestApi.Controllers
         [HttpGet("ByName/{name}")]
         public async Task<ActionResult<PhoneBookEntry>> GetPhoneBookEntryByName(string name)
         {
-            var phoneBookEntry = await _context.PhoneBookEntries
-                .FirstOrDefaultAsync(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            var phoneBookEntry = await _mediator.Send(new GetPhoneBookEntryByNameQuery(name));
 
             if (phoneBookEntry == null)
             {
@@ -61,10 +62,9 @@ namespace PhoneBookRestApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            _context.PhoneBookEntries.Add(phoneBookEntry);
-            await _context.SaveChangesAsync();
+            var createdEntry = await _mediator.Send(new CreatePhoneBookEntryCommand(phoneBookEntry));
 
-            return CreatedAtAction(nameof(GetPhoneBookEntry), new { id = phoneBookEntry.Id }, phoneBookEntry);
+            return CreatedAtAction(nameof(GetPhoneBookEntry), new { id = createdEntry.Id }, createdEntry);
         }
 
         // PUT: api/PhoneBook/{id}
@@ -81,22 +81,11 @@ namespace PhoneBookRestApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            _context.Entry(phoneBookEntry).State = EntityState.Modified;
+            var success = await _mediator.Send(new UpdatePhoneBookEntryCommand(id, phoneBookEntry));
 
-            try
+            if (!success)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!PhoneBookEntryExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
 
             return NoContent();
@@ -106,21 +95,14 @@ namespace PhoneBookRestApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePhoneBookEntry(int id)
         {
-            var phoneBookEntry = await _context.PhoneBookEntries.FindAsync(id);
-            if (phoneBookEntry == null)
+            var success = await _mediator.Send(new DeletePhoneBookEntryCommand(id));
+
+            if (!success)
             {
                 return NotFound();
             }
 
-            _context.PhoneBookEntries.Remove(phoneBookEntry);
-            await _context.SaveChangesAsync();
-
             return NoContent();
-        }
-
-        private bool PhoneBookEntryExists(int id)
-        {
-            return _context.PhoneBookEntries.Any(e => e.Id == id);
         }
     }
 }
