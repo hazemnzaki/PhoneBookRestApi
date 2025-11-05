@@ -23,6 +23,7 @@ namespace PhoneBookRestApi.Handlers
                 return false;
             }
 
+            // Update properties from the incoming entry
             existingEntry.Name = request.Entry.Name;
             existingEntry.PhoneNumber = request.Entry.PhoneNumber;
 
