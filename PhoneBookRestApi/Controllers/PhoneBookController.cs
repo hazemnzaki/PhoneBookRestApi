@@ -1,7 +1,9 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using PhoneBookRestApi.Commands;
 using PhoneBookRestApi.CQRS;
 using PhoneBookRestApi.Data.Models;
+using PhoneBookRestApi.Dtos;
 using PhoneBookRestApi.Queries;
 
 namespace PhoneBookRestApi.Controllers
@@ -11,23 +13,26 @@ namespace PhoneBookRestApi.Controllers
     public class PhoneBookController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly IMapper _mapper;
 
-        public PhoneBookController(IMediator mediator)
+        public PhoneBookController(IMediator mediator, IMapper mapper)
         {
             _mediator = mediator;
+            _mapper = mapper;
         }
 
         // GET: api/PhoneBook
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PhoneBookEntry>>> GetPhoneBookEntries()
+        public async Task<ActionResult<IEnumerable<PhoneBookEntryDto>>> GetPhoneBookEntries()
         {
             var entries = await _mediator.Send(new GetAllPhoneBookEntriesQuery());
-            return Ok(entries);
+            var dtos = _mapper.Map<IEnumerable<PhoneBookEntryDto>>(entries);
+            return Ok(dtos);
         }
 
         // GET: api/PhoneBook/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<PhoneBookEntry>> GetPhoneBookEntry(int id)
+        public async Task<ActionResult<PhoneBookEntryDto>> GetPhoneBookEntry(int id)
         {
             var phoneBookEntry = await _mediator.Send(new GetPhoneBookEntryByIdQuery(id));
 
@@ -36,12 +41,13 @@ namespace PhoneBookRestApi.Controllers
                 return NotFound();
             }
 
-            return phoneBookEntry;
+            var dto = _mapper.Map<PhoneBookEntryDto>(phoneBookEntry);
+            return dto;
         }
 
         // GET: api/PhoneBook/ByName/{name}
         [HttpGet("ByName/{name}")]
-        public async Task<ActionResult<PhoneBookEntry>> GetPhoneBookEntryByName(string name)
+        public async Task<ActionResult<PhoneBookEntryDto>> GetPhoneBookEntryByName(string name)
         {
             var phoneBookEntry = await _mediator.Send(new GetPhoneBookEntryByNameQuery(name));
 
@@ -50,36 +56,37 @@ namespace PhoneBookRestApi.Controllers
                 return NotFound();
             }
 
-            return phoneBookEntry;
+            var dto = _mapper.Map<PhoneBookEntryDto>(phoneBookEntry);
+            return dto;
         }
 
         // POST: api/PhoneBook
         [HttpPost]
-        public async Task<ActionResult<PhoneBookEntry>> PostPhoneBookEntry(PhoneBookEntry phoneBookEntry)
+        public async Task<ActionResult<PhoneBookEntryDto>> PostPhoneBookEntry(CreatePhoneBookEntryDto createDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
+            var phoneBookEntry = _mapper.Map<PhoneBookEntry>(createDto);
             var createdEntry = await _mediator.Send(new CreatePhoneBookEntryCommand(phoneBookEntry));
+            var dto = _mapper.Map<PhoneBookEntryDto>(createdEntry);
 
-            return CreatedAtAction(nameof(GetPhoneBookEntry), new { id = createdEntry.Id }, createdEntry);
+            return CreatedAtAction(nameof(GetPhoneBookEntry), new { id = dto.Id }, dto);
         }
 
         // PUT: api/PhoneBook/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutPhoneBookEntry(int id, PhoneBookEntry phoneBookEntry)
+        public async Task<IActionResult> PutPhoneBookEntry(int id, UpdatePhoneBookEntryDto updateDto)
         {
-            if (id != phoneBookEntry.Id)
-            {
-                return BadRequest();
-            }
-
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+
+            var phoneBookEntry = _mapper.Map<PhoneBookEntry>(updateDto);
+            phoneBookEntry.Id = id;
 
             var success = await _mediator.Send(new UpdatePhoneBookEntryCommand(id, phoneBookEntry));
 

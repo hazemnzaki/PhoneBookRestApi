@@ -16,7 +16,15 @@ namespace PhoneBookRestApi.Handlers
 
         public async Task<bool> Handle(UpdatePhoneBookEntryCommand request, CancellationToken cancellationToken)
         {
-            _context.Entry(request.Entry).State = EntityState.Modified;
+            var existingEntry = await _context.PhoneBookEntries.FindAsync(new object[] { request.Id }, cancellationToken);
+
+            if (existingEntry == null)
+            {
+                return false;
+            }
+
+            existingEntry.Name = request.Entry.Name;
+            existingEntry.PhoneNumber = request.Entry.PhoneNumber;
 
             try
             {
