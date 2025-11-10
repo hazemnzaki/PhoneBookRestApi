@@ -12,12 +12,29 @@ namespace PhoneBookRestApi.Controllers
     [ApiController]
     public class PhoneBookController : ControllerBase
     {
-        private readonly IMediator _mediator;
+        private readonly IRequestHandler<GetAllPhoneBookEntriesQuery, IEnumerable<PhoneBookEntry>> _getAllHandler;
+        private readonly IRequestHandler<GetPhoneBookEntryByIdQuery, PhoneBookEntry?> _getByIdHandler;
+        private readonly IRequestHandler<GetPhoneBookEntryByNameQuery, PhoneBookEntry?> _getByNameHandler;
+        private readonly IRequestHandler<CreatePhoneBookEntryCommand, PhoneBookEntry> _createHandler;
+        private readonly IRequestHandler<UpdatePhoneBookEntryCommand, bool> _updateHandler;
+        private readonly IRequestHandler<DeletePhoneBookEntryCommand, bool> _deleteHandler;
         private readonly IMapper _mapper;
 
-        public PhoneBookController(IMediator mediator, IMapper mapper)
+        public PhoneBookController(
+            IRequestHandler<GetAllPhoneBookEntriesQuery, IEnumerable<PhoneBookEntry>> getAllHandler,
+            IRequestHandler<GetPhoneBookEntryByIdQuery, PhoneBookEntry?> getByIdHandler,
+            IRequestHandler<GetPhoneBookEntryByNameQuery, PhoneBookEntry?> getByNameHandler,
+            IRequestHandler<CreatePhoneBookEntryCommand, PhoneBookEntry> createHandler,
+            IRequestHandler<UpdatePhoneBookEntryCommand, bool> updateHandler,
+            IRequestHandler<DeletePhoneBookEntryCommand, bool> deleteHandler,
+            IMapper mapper)
         {
-            _mediator = mediator;
+            _getAllHandler = getAllHandler;
+            _getByIdHandler = getByIdHandler;
+            _getByNameHandler = getByNameHandler;
+            _createHandler = createHandler;
+            _updateHandler = updateHandler;
+            _deleteHandler = deleteHandler;
             _mapper = mapper;
         }
 
@@ -25,7 +42,7 @@ namespace PhoneBookRestApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<PhoneBookEntryDto>>> GetPhoneBookEntries()
         {
-            var entries = await _mediator.Send(new GetAllPhoneBookEntriesQuery());
+            var entries = await _getAllHandler.Handle(new GetAllPhoneBookEntriesQuery(), CancellationToken.None);
             var dtos = _mapper.Map<IEnumerable<PhoneBookEntryDto>>(entries);
             return Ok(dtos);
         }
@@ -34,7 +51,7 @@ namespace PhoneBookRestApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<PhoneBookEntryDto>> GetPhoneBookEntry(int id)
         {
-            var phoneBookEntry = await _mediator.Send(new GetPhoneBookEntryByIdQuery(id));
+            var phoneBookEntry = await _getByIdHandler.Handle(new GetPhoneBookEntryByIdQuery(id), CancellationToken.None);
 
             if (phoneBookEntry == null)
             {
@@ -49,7 +66,7 @@ namespace PhoneBookRestApi.Controllers
         [HttpGet("ByName/{name}")]
         public async Task<ActionResult<PhoneBookEntryDto>> GetPhoneBookEntryByName(string name)
         {
-            var phoneBookEntry = await _mediator.Send(new GetPhoneBookEntryByNameQuery(name));
+            var phoneBookEntry = await _getByNameHandler.Handle(new GetPhoneBookEntryByNameQuery(name), CancellationToken.None);
 
             if (phoneBookEntry == null)
             {
@@ -70,7 +87,7 @@ namespace PhoneBookRestApi.Controllers
             }
 
             var phoneBookEntry = _mapper.Map<PhoneBookEntry>(createDto);
-            var createdEntry = await _mediator.Send(new CreatePhoneBookEntryCommand(phoneBookEntry));
+            var createdEntry = await _createHandler.Handle(new CreatePhoneBookEntryCommand(phoneBookEntry), CancellationToken.None);
             var dto = _mapper.Map<PhoneBookEntryDto>(createdEntry);
 
             return CreatedAtAction(nameof(GetPhoneBookEntry), new { id = dto.Id }, dto);
@@ -88,7 +105,7 @@ namespace PhoneBookRestApi.Controllers
             var phoneBookEntry = _mapper.Map<PhoneBookEntry>(updateDto);
             phoneBookEntry.Id = id;
 
-            var success = await _mediator.Send(new UpdatePhoneBookEntryCommand(id, phoneBookEntry));
+            var success = await _updateHandler.Handle(new UpdatePhoneBookEntryCommand(id, phoneBookEntry), CancellationToken.None);
 
             if (!success)
             {
@@ -102,7 +119,7 @@ namespace PhoneBookRestApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePhoneBookEntry(int id)
         {
-            var success = await _mediator.Send(new DeletePhoneBookEntryCommand(id));
+            var success = await _deleteHandler.Handle(new DeletePhoneBookEntryCommand(id), CancellationToken.None);
 
             if (!success)
             {

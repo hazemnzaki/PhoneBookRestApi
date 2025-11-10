@@ -1,8 +1,6 @@
-using PhoneBookRestApi.CQRS;
-
 namespace PhoneBookRestApi.Commands
 {
-    public class DeletePhoneBookEntryCommand : IRequest<bool>
+    public class DeletePhoneBookEntryCommand
     {
         public int Id { get; }
 

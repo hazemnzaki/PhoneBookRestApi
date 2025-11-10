@@ -1,9 +1,8 @@
-using PhoneBookRestApi.CQRS;
 using PhoneBookRestApi.Data.Models;
 
 namespace PhoneBookRestApi.Commands
 {
-    public class UpdatePhoneBookEntryCommand : IRequest<bool>
+    public class UpdatePhoneBookEntryCommand
     {
         public int Id { get; }
         public PhoneBookEntry Entry { get; }

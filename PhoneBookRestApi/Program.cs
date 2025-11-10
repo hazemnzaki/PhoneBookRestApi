@@ -16,9 +16,6 @@ builder.Services.AddSwaggerGen();
 // Register AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 
-// Register custom CQRS infrastructure
-builder.Services.AddScoped<IMediator, Mediator>();
-
 // Register command handlers
 builder.Services.AddScoped<IRequestHandler<CreatePhoneBookEntryCommand, PhoneBookEntry>, CreatePhoneBookEntryCommandHandler>();
 builder.Services.AddScoped<IRequestHandler<UpdatePhoneBookEntryCommand, bool>, UpdatePhoneBookEntryCommandHandler>();
