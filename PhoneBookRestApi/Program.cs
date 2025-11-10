@@ -13,6 +13,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Register AutoMapper
+builder.Services.AddAutoMapper(typeof(Program));
+
 // Register custom CQRS infrastructure
 builder.Services.AddScoped<IMediator, Mediator>();
 

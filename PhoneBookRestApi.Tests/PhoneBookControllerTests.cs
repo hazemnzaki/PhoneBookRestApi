@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,7 +7,9 @@ using PhoneBookRestApi.Controllers;
 using PhoneBookRestApi.CQRS;
 using PhoneBookRestApi.Data;
 using PhoneBookRestApi.Data.Models;
+using PhoneBookRestApi.Dtos;
 using PhoneBookRestApi.Handlers;
+using PhoneBookRestApi.Mappings;
 using PhoneBookRestApi.Queries;
 
 namespace PhoneBookRestApi.Tests
@@ -29,6 +32,9 @@ namespace PhoneBookRestApi.Tests
             var services = new ServiceCollection();
             services.AddSingleton(context);
             
+            // Register AutoMapper
+            services.AddAutoMapper(typeof(MappingProfile));
+            
             // Register custom CQRS infrastructure
             services.AddScoped<IMediator, Mediator>();
             
@@ -46,21 +52,28 @@ namespace PhoneBookRestApi.Tests
             return serviceProvider.GetRequiredService<IMediator>();
         }
 
+        private IMapper GetMapper()
+        {
+            var config = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>());
+            return config.CreateMapper();
+        }
+
         [Fact]
         public async Task GetPhoneBookEntries_ReturnsEmptyList_WhenNoEntries()
         {
             // Arrange
             using var context = GetInMemoryDbContext();
             var mediator = GetMediator(context);
-            var controller = new PhoneBookController(mediator);
+            var mapper = GetMapper();
+            var controller = new PhoneBookController(mediator, mapper);
 
             // Act
             var result = await controller.GetPhoneBookEntries();
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<IEnumerable<PhoneBookEntry>>>(result);
+            var actionResult = Assert.IsType<ActionResult<IEnumerable<PhoneBookEntryDto>>>(result);
             var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
-            var entries = Assert.IsAssignableFrom<IEnumerable<PhoneBookEntry>>(okResult.Value);
+            var entries = Assert.IsAssignableFrom<IEnumerable<PhoneBookEntryDto>>(okResult.Value);
             Assert.Empty(entries);
         }
 
@@ -76,15 +89,16 @@ namespace PhoneBookRestApi.Tests
             await context.SaveChangesAsync();
 
             var mediator = GetMediator(context);
-            var controller = new PhoneBookController(mediator);
+            var mapper = GetMapper();
+            var controller = new PhoneBookController(mediator, mapper);
 
             // Act
             var result = await controller.GetPhoneBookEntries();
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<IEnumerable<PhoneBookEntry>>>(result);
+            var actionResult = Assert.IsType<ActionResult<IEnumerable<PhoneBookEntryDto>>>(result);
             var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
-            var entries = Assert.IsAssignableFrom<IEnumerable<PhoneBookEntry>>(okResult.Value);
+            var entries = Assert.IsAssignableFrom<IEnumerable<PhoneBookEntryDto>>(okResult.Value);
             Assert.Equal(2, entries.Count());
         }
 
@@ -98,14 +112,15 @@ namespace PhoneBookRestApi.Tests
             await context.SaveChangesAsync();
 
             var mediator = GetMediator(context);
-            var controller = new PhoneBookController(mediator);
+            var mapper = GetMapper();
+            var controller = new PhoneBookController(mediator, mapper);
 
             // Act
             var result = await controller.GetPhoneBookEntry(entry.Id);
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<PhoneBookEntry>>(result);
-            var returnedEntry = Assert.IsType<PhoneBookEntry>(actionResult.Value);
+            var actionResult = Assert.IsType<ActionResult<PhoneBookEntryDto>>(result);
+            var returnedEntry = Assert.IsType<PhoneBookEntryDto>(actionResult.Value);
             Assert.Equal("John Doe", returnedEntry.Name);
             Assert.Equal("123-456-7890", returnedEntry.PhoneNumber);
         }
@@ -116,7 +131,8 @@ namespace PhoneBookRestApi.Tests
             // Arrange
             using var context = GetInMemoryDbContext();
             var mediator = GetMediator(context);
-            var controller = new PhoneBookController(mediator);
+            var mapper = GetMapper();
+            var controller = new PhoneBookController(mediator, mapper);
 
             // Act
             var result = await controller.GetPhoneBookEntry(999);
@@ -135,14 +151,15 @@ namespace PhoneBookRestApi.Tests
             await context.SaveChangesAsync();
 
             var mediator = GetMediator(context);
-            var controller = new PhoneBookController(mediator);
+            var mapper = GetMapper();
+            var controller = new PhoneBookController(mediator, mapper);
 
             // Act
             var result = await controller.GetPhoneBookEntryByName("John Doe");
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<PhoneBookEntry>>(result);
-            var returnedEntry = Assert.IsType<PhoneBookEntry>(actionResult.Value);
+            var actionResult = Assert.IsType<ActionResult<PhoneBookEntryDto>>(result);
+            var returnedEntry = Assert.IsType<PhoneBookEntryDto>(actionResult.Value);
             Assert.Equal("John Doe", returnedEntry.Name);
             Assert.Equal("123-456-7890", returnedEntry.PhoneNumber);
         }
@@ -157,14 +174,15 @@ namespace PhoneBookRestApi.Tests
             await context.SaveChangesAsync();
 
             var mediator = GetMediator(context);
-            var controller = new PhoneBookController(mediator);
+            var mapper = GetMapper();
+            var controller = new PhoneBookController(mediator, mapper);
 
             // Act
             var result = await controller.GetPhoneBookEntryByName("john doe");
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<PhoneBookEntry>>(result);
-            var returnedEntry = Assert.IsType<PhoneBookEntry>(actionResult.Value);
+            var actionResult = Assert.IsType<ActionResult<PhoneBookEntryDto>>(result);
+            var returnedEntry = Assert.IsType<PhoneBookEntryDto>(actionResult.Value);
             Assert.Equal("John Doe", returnedEntry.Name);
         }
 
@@ -174,7 +192,8 @@ namespace PhoneBookRestApi.Tests
             // Arrange
             using var context = GetInMemoryDbContext();
             var mediator = GetMediator(context);
-            var controller = new PhoneBookController(mediator);
+            var mapper = GetMapper();
+            var controller = new PhoneBookController(mediator, mapper);
 
             // Act
             var result = await controller.GetPhoneBookEntryByName("NonExistent");
@@ -189,16 +208,17 @@ namespace PhoneBookRestApi.Tests
             // Arrange
             using var context = GetInMemoryDbContext();
             var mediator = GetMediator(context);
-            var controller = new PhoneBookController(mediator);
-            var newEntry = new PhoneBookEntry { Name = "John Doe", PhoneNumber = "123-456-7890" };
+            var mapper = GetMapper();
+            var controller = new PhoneBookController(mediator, mapper);
+            var newEntry = new CreatePhoneBookEntryDto { Name = "John Doe", PhoneNumber = "123-456-7890" };
 
             // Act
             var result = await controller.PostPhoneBookEntry(newEntry);
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<PhoneBookEntry>>(result);
+            var actionResult = Assert.IsType<ActionResult<PhoneBookEntryDto>>(result);
             var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
-            var createdEntry = Assert.IsType<PhoneBookEntry>(createdResult.Value);
+            var createdEntry = Assert.IsType<PhoneBookEntryDto>(createdResult.Value);
             Assert.Equal("John Doe", createdEntry.Name);
             Assert.Equal("123-456-7890", createdEntry.PhoneNumber);
             Assert.True(createdEntry.Id > 0);
@@ -214,11 +234,12 @@ namespace PhoneBookRestApi.Tests
             await context.SaveChangesAsync();
 
             var mediator = GetMediator(context);
-            var controller = new PhoneBookController(mediator);
-            entry.PhoneNumber = "999-888-7777";
+            var mapper = GetMapper();
+            var controller = new PhoneBookController(mediator, mapper);
+            var updateDto = new UpdatePhoneBookEntryDto { Name = "John Doe", PhoneNumber = "999-888-7777" };
 
             // Act
-            var result = await controller.PutPhoneBookEntry(entry.Id, entry);
+            var result = await controller.PutPhoneBookEntry(entry.Id, updateDto);
 
             // Assert
             Assert.IsType<NoContentResult>(result);
@@ -229,32 +250,17 @@ namespace PhoneBookRestApi.Tests
         }
 
         [Fact]
-        public async Task PutPhoneBookEntry_ReturnsBadRequest_WhenIdMismatch()
-        {
-            // Arrange
-            using var context = GetInMemoryDbContext();
-            var mediator = GetMediator(context);
-            var controller = new PhoneBookController(mediator);
-            var entry = new PhoneBookEntry { Id = 1, Name = "John Doe", PhoneNumber = "123-456-7890" };
-
-            // Act
-            var result = await controller.PutPhoneBookEntry(999, entry);
-
-            // Assert
-            Assert.IsType<BadRequestResult>(result);
-        }
-
-        [Fact]
         public async Task PutPhoneBookEntry_ReturnsNotFound_WhenEntryDoesNotExist()
         {
             // Arrange
             using var context = GetInMemoryDbContext();
             var mediator = GetMediator(context);
-            var controller = new PhoneBookController(mediator);
-            var entry = new PhoneBookEntry { Id = 999, Name = "John Doe", PhoneNumber = "123-456-7890" };
+            var mapper = GetMapper();
+            var controller = new PhoneBookController(mediator, mapper);
+            var updateDto = new UpdatePhoneBookEntryDto { Name = "John Doe", PhoneNumber = "123-456-7890" };
 
             // Act
-            var result = await controller.PutPhoneBookEntry(999, entry);
+            var result = await controller.PutPhoneBookEntry(999, updateDto);
 
             // Assert
             Assert.IsType<NotFoundResult>(result);
@@ -270,7 +276,8 @@ namespace PhoneBookRestApi.Tests
             await context.SaveChangesAsync();
 
             var mediator = GetMediator(context);
-            var controller = new PhoneBookController(mediator);
+            var mapper = GetMapper();
+            var controller = new PhoneBookController(mediator, mapper);
 
             // Act
             var result = await controller.DeletePhoneBookEntry(entry.Id);
@@ -288,7 +295,8 @@ namespace PhoneBookRestApi.Tests
             // Arrange
             using var context = GetInMemoryDbContext();
             var mediator = GetMediator(context);
-            var controller = new PhoneBookController(mediator);
+            var mapper = GetMapper();
+            var controller = new PhoneBookController(mediator, mapper);
 
             // Act
             var result = await controller.DeletePhoneBookEntry(999);
