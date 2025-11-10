@@ -27,16 +27,13 @@ namespace PhoneBookRestApi.Tests
             return _contextFactory.CreateDbContext(options);
         }
 
-        private IMediator GetMediator(PhoneBookContext context)
+        private PhoneBookController GetController(PhoneBookContext context)
         {
             var services = new ServiceCollection();
             services.AddSingleton(context);
             
             // Register AutoMapper
             services.AddAutoMapper(typeof(MappingProfile));
-            
-            // Register custom CQRS infrastructure
-            services.AddScoped<IMediator, Mediator>();
             
             // Register command handlers
             services.AddScoped<IRequestHandler<CreatePhoneBookEntryCommand, PhoneBookEntry>, CreatePhoneBookEntryCommandHandler>();
@@ -49,13 +46,16 @@ namespace PhoneBookRestApi.Tests
             services.AddScoped<IRequestHandler<GetPhoneBookEntryByNameQuery, PhoneBookEntry?>, GetPhoneBookEntryByNameQueryHandler>();
             
             var serviceProvider = services.BuildServiceProvider();
-            return serviceProvider.GetRequiredService<IMediator>();
-        }
-
-        private IMapper GetMapper()
-        {
-            var config = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>());
-            return config.CreateMapper();
+            
+            return new PhoneBookController(
+                serviceProvider.GetRequiredService<IRequestHandler<GetAllPhoneBookEntriesQuery, IEnumerable<PhoneBookEntry>>>(),
+                serviceProvider.GetRequiredService<IRequestHandler<GetPhoneBookEntryByIdQuery, PhoneBookEntry?>>(),
+                serviceProvider.GetRequiredService<IRequestHandler<GetPhoneBookEntryByNameQuery, PhoneBookEntry?>>(),
+                serviceProvider.GetRequiredService<IRequestHandler<CreatePhoneBookEntryCommand, PhoneBookEntry>>(),
+                serviceProvider.GetRequiredService<IRequestHandler<UpdatePhoneBookEntryCommand, bool>>(),
+                serviceProvider.GetRequiredService<IRequestHandler<DeletePhoneBookEntryCommand, bool>>(),
+                serviceProvider.GetRequiredService<IMapper>()
+            );
         }
 
         [Fact]
@@ -63,9 +63,7 @@ namespace PhoneBookRestApi.Tests
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var mediator = GetMediator(context);
-            var mapper = GetMapper();
-            var controller = new PhoneBookController(mediator, mapper);
+            var controller = GetController(context);
 
             // Act
             var result = await controller.GetPhoneBookEntries();
@@ -88,9 +86,7 @@ namespace PhoneBookRestApi.Tests
             );
             await context.SaveChangesAsync();
 
-            var mediator = GetMediator(context);
-            var mapper = GetMapper();
-            var controller = new PhoneBookController(mediator, mapper);
+            var controller = GetController(context);
 
             // Act
             var result = await controller.GetPhoneBookEntries();
@@ -111,9 +107,7 @@ namespace PhoneBookRestApi.Tests
             context.PhoneBookEntries.Add(entry);
             await context.SaveChangesAsync();
 
-            var mediator = GetMediator(context);
-            var mapper = GetMapper();
-            var controller = new PhoneBookController(mediator, mapper);
+            var controller = GetController(context);
 
             // Act
             var result = await controller.GetPhoneBookEntry(entry.Id);
@@ -130,9 +124,7 @@ namespace PhoneBookRestApi.Tests
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var mediator = GetMediator(context);
-            var mapper = GetMapper();
-            var controller = new PhoneBookController(mediator, mapper);
+            var controller = GetController(context);
 
             // Act
             var result = await controller.GetPhoneBookEntry(999);
@@ -150,9 +142,7 @@ namespace PhoneBookRestApi.Tests
             context.PhoneBookEntries.Add(entry);
             await context.SaveChangesAsync();
 
-            var mediator = GetMediator(context);
-            var mapper = GetMapper();
-            var controller = new PhoneBookController(mediator, mapper);
+            var controller = GetController(context);
 
             // Act
             var result = await controller.GetPhoneBookEntryByName("John Doe");
@@ -173,9 +163,7 @@ namespace PhoneBookRestApi.Tests
             context.PhoneBookEntries.Add(entry);
             await context.SaveChangesAsync();
 
-            var mediator = GetMediator(context);
-            var mapper = GetMapper();
-            var controller = new PhoneBookController(mediator, mapper);
+            var controller = GetController(context);
 
             // Act
             var result = await controller.GetPhoneBookEntryByName("john doe");
@@ -191,9 +179,7 @@ namespace PhoneBookRestApi.Tests
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var mediator = GetMediator(context);
-            var mapper = GetMapper();
-            var controller = new PhoneBookController(mediator, mapper);
+            var controller = GetController(context);
 
             // Act
             var result = await controller.GetPhoneBookEntryByName("NonExistent");
@@ -207,9 +193,7 @@ namespace PhoneBookRestApi.Tests
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var mediator = GetMediator(context);
-            var mapper = GetMapper();
-            var controller = new PhoneBookController(mediator, mapper);
+            var controller = GetController(context);
             var newEntry = new CreatePhoneBookEntryDto { Name = "John Doe", PhoneNumber = "123-456-7890" };
 
             // Act
@@ -233,9 +217,7 @@ namespace PhoneBookRestApi.Tests
             context.PhoneBookEntries.Add(entry);
             await context.SaveChangesAsync();
 
-            var mediator = GetMediator(context);
-            var mapper = GetMapper();
-            var controller = new PhoneBookController(mediator, mapper);
+            var controller = GetController(context);
             var updateDto = new UpdatePhoneBookEntryDto { Name = "John Doe", PhoneNumber = "999-888-7777" };
 
             // Act
@@ -254,9 +236,7 @@ namespace PhoneBookRestApi.Tests
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var mediator = GetMediator(context);
-            var mapper = GetMapper();
-            var controller = new PhoneBookController(mediator, mapper);
+            var controller = GetController(context);
             var updateDto = new UpdatePhoneBookEntryDto { Name = "John Doe", PhoneNumber = "123-456-7890" };
 
             // Act
@@ -275,9 +255,7 @@ namespace PhoneBookRestApi.Tests
             context.PhoneBookEntries.Add(entry);
             await context.SaveChangesAsync();
 
-            var mediator = GetMediator(context);
-            var mapper = GetMapper();
-            var controller = new PhoneBookController(mediator, mapper);
+            var controller = GetController(context);
 
             // Act
             var result = await controller.DeletePhoneBookEntry(entry.Id);
@@ -294,9 +272,7 @@ namespace PhoneBookRestApi.Tests
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var mediator = GetMediator(context);
-            var mapper = GetMapper();
-            var controller = new PhoneBookController(mediator, mapper);
+            var controller = GetController(context);
 
             // Act
             var result = await controller.DeletePhoneBookEntry(999);

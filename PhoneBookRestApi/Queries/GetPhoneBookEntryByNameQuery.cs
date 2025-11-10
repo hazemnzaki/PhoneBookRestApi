@@ -1,9 +1,6 @@
-using PhoneBookRestApi.CQRS;
-using PhoneBookRestApi.Data.Models;
-
 namespace PhoneBookRestApi.Queries
 {
-    public class GetPhoneBookEntryByNameQuery : IRequest<PhoneBookEntry?>
+    public class GetPhoneBookEntryByNameQuery
     {
         public string Name { get; }
 
